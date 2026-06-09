@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local tooling / AI assistant config
+.claude/
+CLAUDE.md
+
+# Cloudflare local config
+wrangler.toml
