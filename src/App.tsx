@@ -21,7 +21,6 @@ function App() {
     setCategoryLabel,
     setCategoryAmount,
     setCategoryGrowthRate,
-    loadScenario,
     reinitialize,
   } = useSimulation();
 

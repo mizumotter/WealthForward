@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import Dexie, { type EntityTable } from "dexie";
-import type { Simulation } from "./types";
+import type { Simulation, Category, FamilyMember } from "./types";
 
 const db = new Dexie("wealthforward") as Dexie & {
   simulations: EntityTable<Simulation, "id">;
