@@ -12,8 +12,11 @@ export type Simulation = {
   startYear: number;
   endYear: number;
 
-  /** Net worth at the start of startYear (sum of all assets − liabilities). */
-  initialBalance: number;
+  /**
+   * Balance adjustment categories (e.g. starting savings, inheritance, lump-sum).
+   * Each category has per-year amounts, summed and added to cumulative balance.
+   */
+  balanceInputs: Category[];
 
   family: FamilyMember[];
   income: Category[];
@@ -34,8 +37,10 @@ export type FamilyMember = {
 export type Category = {
   id: string;
   label: string;
-  /** year → amount in JPY (annual). Missing year = 0. */
+  /** year → amount in JPY (annual). Missing year = 0 (or computed via growthRate). */
   amounts: Record<number, number>;
+  /** Annual growth rate in percent (e.g. 3 = +3%/year). Applied to fill missing years. */
+  growthRate?: number;
 };
 
 // -----------------------------------------------------------------------
@@ -48,7 +53,8 @@ export type YearResult = {
   ages: { memberId: string; age: number }[];
   totalIncome: number;
   totalCosts: number;
-  annualNet: number; // income - costs
+  balanceInput: number; // per-year adjustment (savings, inheritance, etc.)
+  annualNet: number; // income - costs + balanceInput
   cumulativeBalance: number; // running sum of annualNet
 };
 
@@ -70,7 +76,7 @@ function _id(): string {
 }
 
 export function createSimulation(
-  partial?: Partial<Pick<Simulation, "name" | "startYear" | "endYear" | "initialBalance">>,
+  partial?: Partial<Pick<Simulation, "name" | "startYear" | "endYear">>,
 ): Simulation {
   const now = Date.now();
   return {
@@ -78,7 +84,7 @@ export function createSimulation(
     name: partial?.name ?? `Scenario ${++_counter}`,
     startYear: partial?.startYear ?? new Date().getFullYear(),
     endYear: partial?.endYear ?? new Date().getFullYear() + 24,
-    initialBalance: partial?.initialBalance ?? 0,
+    balanceInputs: [] as Category[],
     family: [],
     income: [],
     costs: [],

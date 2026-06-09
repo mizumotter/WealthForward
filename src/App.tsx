@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AppShell, type TabId } from "@/components/layout/app-shell";
+import { AboutBanner } from "@/components/simulation/about-banner";
 import { YearGrid } from "@/components/simulation/year-grid";
 import { SimChart } from "@/components/simulation/sim-chart";
 import { SettingsView } from "@/components/simulation/settings-view";
@@ -14,11 +15,14 @@ function App() {
     setMeta,
     addFamilyMember,
     removeFamilyMember,
+    updateFamilyMember,
     addCategory,
     removeCategory,
     setCategoryLabel,
     setCategoryAmount,
+    setCategoryGrowthRate,
     loadScenario,
+    reinitialize,
   } = useSimulation();
 
   if (loading || !sim || !result) {
@@ -32,6 +36,8 @@ function App() {
   return (
     <AppShell activeTab={tab} onTabChange={setTab}>
       {tab === "table" && (
+        <>
+        <AboutBanner />
         <YearGrid
           sim={sim}
           result={result}
@@ -41,14 +47,17 @@ function App() {
           onRemoveCategory={removeCategory}
           onAddFamily={addFamilyMember}
           onRemoveFamily={removeFamilyMember}
+          onUpdateFamily={updateFamilyMember}
+          onSetGrowthRate={setCategoryGrowthRate}
         />
+        </>
       )}
       {tab === "chart" && <SimChart result={result} />}
       {tab === "settings" && (
         <SettingsView
           sim={sim}
           onMeta={setMeta}
-          onReload={() => loadScenario(sim.id)}
+          onReload={reinitialize}
         />
       )}
     </AppShell>

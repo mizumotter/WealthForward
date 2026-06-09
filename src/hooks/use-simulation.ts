@@ -38,7 +38,7 @@ export function useSimulation() {
   // --- Mutation helpers ---
 
   const setMeta = useCallback(
-    (patch: Partial<Pick<Simulation, "name" | "startYear" | "endYear" | "initialBalance">>) => {
+    (patch: Partial<Pick<Simulation, "startYear" | "endYear">>) => {
       if (!sim) return;
       update({ ...sim, ...patch });
     },
@@ -73,7 +73,7 @@ export function useSimulation() {
   );
 
   const addCategory = useCallback(
-    (type: "income" | "costs", label: string) => {
+    (type: "income" | "costs" | "balanceInputs", label: string) => {
       if (!sim) return;
       const cat = createCategory(label);
       update({ ...sim, [type]: [...sim[type], cat] });
@@ -82,7 +82,7 @@ export function useSimulation() {
   );
 
   const removeCategory = useCallback(
-    (type: "income" | "costs", id: string) => {
+    (type: "income" | "costs" | "balanceInputs", id: string) => {
       if (!sim) return;
       update({ ...sim, [type]: sim[type].filter((c) => c.id !== id) });
     },
@@ -90,7 +90,7 @@ export function useSimulation() {
   );
 
   const setCategoryLabel = useCallback(
-    (type: "income" | "costs", id: string, label: string) => {
+    (type: "income" | "costs" | "balanceInputs", id: string, label: string) => {
       if (!sim) return;
       update({
         ...sim,
@@ -101,12 +101,32 @@ export function useSimulation() {
   );
 
   const setCategoryAmount = useCallback(
-    (type: "income" | "costs", id: string, year: number, amount: number) => {
+    (type: "income" | "costs" | "balanceInputs", id: string, year: number, amount: number) => {
+      if (!sim) return;
+      update({
+        ...sim,
+        [type]: sim[type].map((c) => {
+          if (c.id !== id) return c;
+          const newAmounts = { ...c.amounts };
+          if (amount === 0) {
+            delete newAmounts[year]; // Remove explicit entry → fallback to growthRate
+          } else {
+            newAmounts[year] = amount;
+          }
+          return { ...c, amounts: newAmounts };
+        }),
+      });
+    },
+    [sim, update],
+  );
+
+  const setCategoryGrowthRate = useCallback(
+    (type: "income" | "costs" | "balanceInputs", id: string, rate: number) => {
       if (!sim) return;
       update({
         ...sim,
         [type]: sim[type].map((c) =>
-          c.id === id ? { ...c, amounts: { ...c.amounts, [year]: amount } } : c,
+          c.id === id ? { ...c, growthRate: rate || undefined } : c,
         ),
       });
     },
@@ -124,6 +144,22 @@ export function useSimulation() {
     setLoading(false);
   }, []);
 
+  // Reinitialize from DB (used after clear/import)
+  const reinitialize = useCallback(async () => {
+    setLoading(true);
+    const all = await listSimulations();
+    let active: Simulation;
+    if (all.length > 0) {
+      active = all[0];
+    } else {
+      active = createDemoSimulation();
+      await saveSimulation(active);
+    }
+    setSim(active);
+    setResult(simulate(active));
+    setLoading(false);
+  }, []);
+
   return {
     sim,
     result,
@@ -136,6 +172,8 @@ export function useSimulation() {
     removeCategory,
     setCategoryLabel,
     setCategoryAmount,
+    setCategoryGrowthRate,
     loadScenario,
+    reinitialize,
   };
 }

@@ -1,8 +1,12 @@
 // -----------------------------------------------------------------------
 // Simulation engine — pure functions, no side effects
 //
-// Takes a Simulation and returns yearly results.
-// This is the heart of the app: income − costs = net, accumulated.
+// Balance Input = absolute level of savings/investments (carries forward).
+// Income / Costs = annual flow (no carry-forward, 0 if missing).
+// Both support per-category growthRate (% per year).
+//
+// Annual Net = income − costs
+// Balance   = cumulative net + balance input level
 // -----------------------------------------------------------------------
 
 import type { Simulation, SimulationResult, YearResult, Category } from "./types";
@@ -10,30 +14,91 @@ import type { Simulation, SimulationResult, YearResult, Category } from "./types
 // Re-export for consumers that import from engine
 export type { SimulationResult, YearResult } from "./types";
 
-/** Sum all categories for a given year. Missing entries = 0. */
-function sumForYear(categories: Category[], year: number): number {
+// -----------------------------------------------------------------------
+// Resolve per-category amounts with growth rate
+// -----------------------------------------------------------------------
+
+/**
+ * Resolve effective amounts for a category across years.
+ *
+ * @param carry  true → carry forward last value (for balance-input levels);
+ *               false → missing year = 0 (for income/cost flows).
+ */
+export function resolveAmounts(
+  cat: Category,
+  startYear: number,
+  endYear: number,
+  carry: boolean,
+): Record<number, number> {
+  const out: Record<number, number> = {};
+  const rate = cat.growthRate ?? 0;
+
+  for (let year = startYear; year <= endYear; year++) {
+    if (year in cat.amounts) {
+      // Explicit entry — always wins
+      out[year] = cat.amounts[year];
+    } else {
+      const prev = out[year - 1] ?? 0;
+      if (rate !== 0 && prev !== 0) {
+        // Grow from previous year
+        out[year] = Math.round(prev * (1 + rate / 100));
+      } else if (carry) {
+        // Balance-input mode: carry forward even without growth
+        out[year] = prev;
+      } else {
+        out[year] = 0;
+      }
+    }
+  }
+  return out;
+}
+
+// -----------------------------------------------------------------------
+// Simulation
+// -----------------------------------------------------------------------
+
+/** Sum resolved amounts across all categories for a given year. */
+function sumResolved(
+  resolvedList: Record<number, number>[],
+  year: number,
+): number {
   let total = 0;
-  for (const cat of categories) {
-    total += cat.amounts[year] ?? 0;
+  for (const r of resolvedList) {
+    total += r[year] ?? 0;
   }
   return total;
 }
 
 /** Run the simulation and produce year-by-year results. */
 export function simulate(sim: Simulation): SimulationResult {
+  // Pre-resolve all categories with growth rates
+  const incomeResolved = sim.income.map((c) =>
+    resolveAmounts(c, sim.startYear, sim.endYear, false),
+  );
+  const costsResolved = sim.costs.map((c) =>
+    resolveAmounts(c, sim.startYear, sim.endYear, false),
+  );
+  const biCats = sim.balanceInputs ?? [];
+  const biResolved = biCats.map((c) =>
+    resolveAmounts(c, sim.startYear, sim.endYear, true),
+  );
+
   const years: YearResult[] = [];
-  let cumulative = sim.initialBalance;
-  let peak = cumulative;
-  let min = cumulative;
+  let cumulativeNet = 0;
+  let peak = -Infinity;
+  let min = Infinity;
 
   for (let year = sim.startYear; year <= sim.endYear; year++) {
-    const totalIncome = sumForYear(sim.income, year);
-    const totalCosts = sumForYear(sim.costs, year);
-    const annualNet = totalIncome - totalCosts;
-    cumulative += annualNet;
+    const totalIncome = sumResolved(incomeResolved, year);
+    const totalCosts = sumResolved(costsResolved, year);
+    const balanceInput = sumResolved(biResolved, year);
 
-    if (cumulative > peak) peak = cumulative;
-    if (cumulative < min) min = cumulative;
+    const annualNet = totalIncome - totalCosts;
+    cumulativeNet += annualNet;
+    const cumulativeBalance = cumulativeNet + balanceInput;
+
+    if (cumulativeBalance > peak) peak = cumulativeBalance;
+    if (cumulativeBalance < min) min = cumulativeBalance;
 
     const ages = sim.family.map((m) => ({
       memberId: m.id,
@@ -45,8 +110,9 @@ export function simulate(sim: Simulation): SimulationResult {
       ages,
       totalIncome,
       totalCosts,
+      balanceInput,
       annualNet,
-      cumulativeBalance: cumulative,
+      cumulativeBalance,
     });
   }
 
@@ -54,6 +120,7 @@ export function simulate(sim: Simulation): SimulationResult {
     years,
     peakBalance: peak === -Infinity ? 0 : peak,
     minBalance: min === Infinity ? 0 : min,
-    finalBalance: cumulative,
+    finalBalance:
+      years.length > 0 ? years[years.length - 1].cumulativeBalance : 0,
   };
 }
