@@ -133,6 +133,40 @@ export function useSimulation() {
     [sim, update],
   );
 
+  // Clear all explicit amounts from a given year onwards
+  const clearAmountsFromYear = useCallback(
+    (type: "income" | "costs" | "balanceInputs", id: string, fromYear: number) => {
+      if (!sim) return;
+      update({
+        ...sim,
+        [type]: sim[type].map((c) => {
+          if (c.id !== id) return c;
+          const newAmounts: Record<number, number> = {};
+          for (const [y, v] of Object.entries(c.amounts)) {
+            if (Number(y) < fromYear) newAmounts[Number(y)] = v;
+          }
+          return { ...c, amounts: newAmounts };
+        }),
+      });
+    },
+    [sim, update],
+  );
+
+  // Move a category up or down within its section
+  const moveCategory = useCallback(
+    (type: "income" | "costs" | "balanceInputs", id: string, direction: "up" | "down") => {
+      if (!sim) return;
+      const arr = [...sim[type]];
+      const idx = arr.findIndex((c) => c.id === id);
+      if (idx < 0) return;
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= arr.length) return;
+      [arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]];
+      update({ ...sim, [type]: arr });
+    },
+    [sim, update],
+  );
+
   // Reload a specific scenario by id
   const loadScenario = useCallback(async (id: string) => {
     setLoading(true);
@@ -173,6 +207,8 @@ export function useSimulation() {
     setCategoryLabel,
     setCategoryAmount,
     setCategoryGrowthRate,
+    clearAmountsFromYear,
+    moveCategory,
     loadScenario,
     reinitialize,
   };

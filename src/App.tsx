@@ -21,6 +21,8 @@ function App() {
     setCategoryLabel,
     setCategoryAmount,
     setCategoryGrowthRate,
+    clearAmountsFromYear,
+    moveCategory,
     reinitialize,
   } = useSimulation();
 
@@ -48,6 +50,8 @@ function App() {
           onRemoveFamily={removeFamilyMember}
           onUpdateFamily={updateFamilyMember}
           onSetGrowthRate={setCategoryGrowthRate}
+          onClearFromYear={clearAmountsFromYear}
+          onMoveCategory={moveCategory}
         />
         </>
       )}

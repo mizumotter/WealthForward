@@ -1,9 +1,64 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Simulation, Category } from "@/lib/types";
 import { resolveAmounts, type SimulationResult } from "@/lib/engine";
+
+// -----------------------------------------------------------------------
+// Context menu for cells
+// -----------------------------------------------------------------------
+
+type ContextMenuState = {
+  x: number;
+  y: number;
+  type: "income" | "costs" | "balanceInputs";
+  catId: string;
+  year: number;
+} | null;
+
+function CellContextMenu({
+  menu,
+  onClose,
+  onClearFromHere,
+}: {
+  menu: ContextMenuState;
+  onClose: () => void;
+  onClearFromHere: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menu) return;
+    const handler = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent && e.key === "Escape") { onClose(); return; }
+      if (e instanceof MouseEvent && ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("keydown", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", handler);
+    };
+  }, [menu, onClose]);
+
+  if (!menu) return null;
+
+  return (
+    <div
+      ref={ref}
+      className="fixed z-50 rounded-md border border-border bg-popover shadow-lg py-1 min-w-[180px]"
+      style={{ left: menu.x, top: menu.y }}
+    >
+      <button
+        onClick={() => { onClearFromHere(); onClose(); }}
+        className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2"
+      >
+        Clear from {menu.year} →
+      </button>
+    </div>
+  );
+}
 
 // -----------------------------------------------------------------------
 // Editable cell — click to edit, blur/Enter to commit
@@ -204,6 +259,8 @@ type Props = {
   onRemoveFamily: (id: string) => void;
   onUpdateFamily: (id: string, patch: Partial<{ name: string; birthYear: number }>) => void;
   onSetGrowthRate: (type: CategoryType, id: string, rate: number) => void;
+  onClearFromYear: (type: CategoryType, id: string, fromYear: number) => void;
+  onMoveCategory: (type: CategoryType, id: string, direction: "up" | "down") => void;
 };
 
 export function YearGrid({
@@ -217,6 +274,8 @@ export function YearGrid({
   onRemoveFamily,
   onUpdateFamily,
   onSetGrowthRate,
+  onClearFromYear,
+  onMoveCategory,
 }: Props) {
   const years = Array.from(
     { length: sim.endYear - sim.startYear + 1 },
@@ -238,6 +297,10 @@ export function YearGrid({
     return map;
   }, [sim]);
 
+  // Context menu state
+  const [ctxMenu, setCtxMenu] = useState<ContextMenuState>(null);
+  const closeMenu = useCallback(() => setCtxMenu(null), []);
+
   const renderCategoryRows = (
     type: CategoryType,
     categories: Category[],
@@ -255,6 +318,25 @@ export function YearGrid({
           {/* Label cell */}
           <td className="sticky left-0 z-10 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-1">
             <div className="flex items-center gap-1">
+              {/* Reorder buttons — visible on hover */}
+              <div className="shrink-0 flex flex-col opacity-0 group-hover:opacity-100 transition-opacity -mr-0.5">
+                <button
+                  onClick={() => onMoveCategory(type, cat.id, "up")}
+                  disabled={idx === 0}
+                  className="text-muted-foreground hover:text-primary disabled:opacity-30 disabled:cursor-default"
+                  title="Move up"
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => onMoveCategory(type, cat.id, "down")}
+                  disabled={idx === categories.length - 1}
+                  className="text-muted-foreground hover:text-primary disabled:opacity-30 disabled:cursor-default"
+                  title="Move down"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </div>
               <input
                 type="text"
                 maxLength={100}
@@ -279,7 +361,14 @@ export function YearGrid({
             const isExplicit = year in cat.amounts;
             const value = res[year] ?? 0;
             return (
-              <td key={year} className="border-r border-border/30 min-w-[90px]">
+              <td
+                key={year}
+                className="border-r border-border/30 min-w-[90px]"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setCtxMenu({ x: e.clientX, y: e.clientY, type, catId: cat.id, year });
+                }}
+              >
                 <EditableCell
                   value={value}
                   onChange={(v) => onSetAmount(type, cat.id, year, v)}
@@ -293,6 +382,14 @@ export function YearGrid({
     });
 
   return (
+    <>
+    <CellContextMenu
+      menu={ctxMenu}
+      onClose={closeMenu}
+      onClearFromHere={() => {
+        if (ctxMenu) onClearFromYear(ctxMenu.type, ctxMenu.catId, ctxMenu.year);
+      }}
+    />
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-max min-w-full border-collapse text-sm">
         {/* Year header */}
@@ -527,5 +624,6 @@ export function YearGrid({
         </tbody>
       </table>
     </div>
+    </>
   );
 }
