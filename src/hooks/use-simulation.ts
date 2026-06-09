@@ -108,10 +108,10 @@ export function useSimulation() {
         [type]: sim[type].map((c) => {
           if (c.id !== id) return c;
           const newAmounts = { ...c.amounts };
-          if (amount === 0) {
+          if (amount === 0 && type !== "balanceInputs") {
             delete newAmounts[year]; // Remove explicit entry → fallback to growthRate
           } else {
-            newAmounts[year] = amount;
+            newAmounts[year] = amount; // Balance inputs: keep explicit 0 to stop carry-forward
           }
           return { ...c, amounts: newAmounts };
         }),
