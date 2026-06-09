@@ -6,7 +6,7 @@
 // Both support per-category growthRate (% per year).
 //
 // Annual Net = income − costs
-// Balance   = cumulative net + balance input level
+// Balance   = balance input + annual net (per-year, not cumulative)
 // -----------------------------------------------------------------------
 
 import type { Simulation, SimulationResult, YearResult, Category } from "./types";
@@ -84,7 +84,6 @@ export function simulate(sim: Simulation): SimulationResult {
   );
 
   const years: YearResult[] = [];
-  let cumulativeNet = 0;
   let peak = -Infinity;
   let min = Infinity;
 
@@ -94,8 +93,7 @@ export function simulate(sim: Simulation): SimulationResult {
     const balanceInput = sumResolved(biResolved, year);
 
     const annualNet = totalIncome - totalCosts;
-    cumulativeNet += annualNet;
-    const cumulativeBalance = cumulativeNet + balanceInput;
+    const cumulativeBalance = balanceInput + annualNet;
 
     if (cumulativeBalance > peak) peak = cumulativeBalance;
     if (cumulativeBalance < min) min = cumulativeBalance;
