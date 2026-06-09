@@ -155,7 +155,7 @@ export function YearGrid({
         className="group"
       >
         {/* Label cell */}
-        <td className="sticky left-0 z-10 bg-card border-r border-border min-w-[140px] px-2 py-1">
+        <td className="sticky left-0 z-10 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-1">
           <div className="flex items-center gap-1">
             <input
               type="text"
@@ -185,11 +185,11 @@ export function YearGrid({
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
-      <table className="w-full border-collapse text-sm">
+      <table className="w-max min-w-full border-collapse text-sm">
         {/* Year header */}
         <thead>
           <tr className="border-b border-border">
-            <th className="sticky left-0 z-20 bg-card border-r border-border min-w-[140px] px-2 py-2 text-left text-xs font-medium text-muted-foreground">
+            <th className="sticky left-0 z-20 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-muted-foreground">
               Year
             </th>
             {years.map((year) => (
@@ -236,7 +236,7 @@ export function YearGrid({
               </tr>
               {sim.family.map((member) => (
                 <tr key={member.id} className="group">
-                  <td className="sticky left-0 z-10 bg-card border-r border-border min-w-[140px] px-2 py-1">
+                  <td className="sticky left-0 z-10 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-1">
                     <div className="flex items-center gap-1">
                       <span className="text-sm">{member.name}</span>
                       <button
