@@ -390,21 +390,21 @@ export function YearGrid({
         if (ctxMenu) onClearFromYear(ctxMenu.type, ctxMenu.catId, ctxMenu.year);
       }}
     />
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
+    <div className="overflow-auto max-h-[calc(100dvh-7rem)] rounded-lg border border-border bg-card">
       <table className="w-max min-w-full border-collapse text-sm">
         {/* Year header */}
-        <thead>
+        <thead className="sticky top-0 z-30">
           <tr className="border-b border-border">
-            <th className="sticky left-0 z-20 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-muted-foreground">
+            <th className="sticky left-0 z-40 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-muted-foreground">
               Year
             </th>
             {years.map((year) => (
               <th
                 key={year}
                 className={cn(
-                  "min-w-[90px] border-r border-border/30 px-1 py-2 text-center text-xs font-medium",
+                  "min-w-[90px] border-r border-border/30 px-1 py-2 text-center text-xs font-medium bg-card",
                   year === currentYear
-                    ? "bg-primary/10 text-primary"
+                    ? "!bg-primary/10 text-primary"
                     : "text-muted-foreground",
                 )}
               >
