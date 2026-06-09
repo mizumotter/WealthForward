@@ -22,9 +22,9 @@ function sumForYear(categories: Category[], year: number): number {
 /** Run the simulation and produce year-by-year results. */
 export function simulate(sim: Simulation): SimulationResult {
   const years: YearResult[] = [];
-  let cumulative = 0;
-  let peak = -Infinity;
-  let min = Infinity;
+  let cumulative = sim.initialBalance;
+  let peak = cumulative;
+  let min = cumulative;
 
   for (let year = sim.startYear; year <= sim.endYear; year++) {
     const totalIncome = sumForYear(sim.income, year);

@@ -208,6 +208,21 @@ export function YearGrid({
           </tr>
         </thead>
         <tbody>
+          {/* Initial balance row */}
+          {sim.initialBalance !== 0 && (
+            <tr className="border-b border-border bg-primary/5">
+              <td className="sticky left-0 z-10 bg-card border-r border-border px-2 py-1.5 text-sm font-medium text-primary">
+                Initial Balance
+              </td>
+              <td className="px-1 py-1.5 text-right font-mono text-sm tabular-nums text-primary">
+                {sim.initialBalance.toLocaleString("ja-JP")}
+              </td>
+              {years.slice(1).map((year) => (
+                <td key={year} className="border-r border-border/30" />
+              ))}
+            </tr>
+          )}
+
           {/* Family ages */}
           {sim.family.length > 0 && (
             <>

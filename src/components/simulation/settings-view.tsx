@@ -6,7 +6,7 @@ import type { Simulation } from "@/lib/types";
 
 type Props = {
   sim: Simulation;
-  onMeta: (patch: Partial<Pick<Simulation, "name" | "startYear" | "endYear">>) => void;
+  onMeta: (patch: Partial<Pick<Simulation, "name" | "startYear" | "endYear" | "initialBalance">>) => void;
   onReload: () => void;
 };
 
@@ -59,6 +59,20 @@ export function SettingsView({ sim, onMeta, onReload }: Props) {
               value={sim.name}
               onChange={(e) => onMeta({ name: e.target.value })}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">
+              Initial Balance (JPY) — net worth at Start Year
+            </label>
+            <input
+              type="text"
+              value={sim.initialBalance.toLocaleString("ja-JP")}
+              onChange={(e) => {
+                const v = parseInt(e.target.value.replace(/[,，]/g, ""), 10);
+                if (!isNaN(v)) onMeta({ initialBalance: v });
+              }}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">

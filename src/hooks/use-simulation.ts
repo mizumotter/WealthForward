@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Simulation, FamilyMember } from "@/lib/types";
-import { createSimulation, createCategory, createFamilyMember } from "@/lib/types";
+import { createCategory, createFamilyMember } from "@/lib/types";
 import { simulate, type SimulationResult } from "@/lib/engine";
 import { getSimulation, listSimulations, saveSimulation } from "@/lib/db";
+import { createDemoSimulation } from "@/lib/demo-data";
 
 export function useSimulation() {
   const [sim, setSim] = useState<Simulation | null>(null);
@@ -17,7 +18,8 @@ export function useSimulation() {
       if (all.length > 0) {
         active = all[0]; // most recently updated
       } else {
-        active = createSimulation({ name: "Base" });
+        // First launch — seed with demo data
+        active = createDemoSimulation();
         await saveSimulation(active);
       }
       setSim(active);
@@ -36,7 +38,7 @@ export function useSimulation() {
   // --- Mutation helpers ---
 
   const setMeta = useCallback(
-    (patch: Partial<Pick<Simulation, "name" | "startYear" | "endYear">>) => {
+    (patch: Partial<Pick<Simulation, "name" | "startYear" | "endYear" | "initialBalance">>) => {
       if (!sim) return;
       update({ ...sim, ...patch });
     },

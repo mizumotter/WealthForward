@@ -12,6 +12,9 @@ export type Simulation = {
   startYear: number;
   endYear: number;
 
+  /** Net worth at the start of startYear (sum of all assets − liabilities). */
+  initialBalance: number;
+
   family: FamilyMember[];
   income: Category[];
   costs: Category[];
@@ -67,7 +70,7 @@ function _id(): string {
 }
 
 export function createSimulation(
-  partial?: Partial<Pick<Simulation, "name" | "startYear" | "endYear">>,
+  partial?: Partial<Pick<Simulation, "name" | "startYear" | "endYear" | "initialBalance">>,
 ): Simulation {
   const now = Date.now();
   return {
@@ -75,6 +78,7 @@ export function createSimulation(
     name: partial?.name ?? `Scenario ${++_counter}`,
     startYear: partial?.startYear ?? new Date().getFullYear(),
     endYear: partial?.endYear ?? new Date().getFullYear() + 24,
+    initialBalance: partial?.initialBalance ?? 0,
     family: [],
     income: [],
     costs: [],
