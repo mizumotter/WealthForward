@@ -22,6 +22,7 @@ function App() {
     setCategoryAmount,
     setCategoryGrowthRate,
     clearAmountsFromYear,
+    fillAmountsFromYear,
     moveCategory,
     reinitialize,
   } = useSimulation();
@@ -51,6 +52,7 @@ function App() {
           onUpdateFamily={updateFamilyMember}
           onSetGrowthRate={setCategoryGrowthRate}
           onClearFromYear={clearAmountsFromYear}
+          onFillFromYear={fillAmountsFromYear}
           onMoveCategory={moveCategory}
         />
         </>

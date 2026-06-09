@@ -21,10 +21,14 @@ function CellContextMenu({
   menu,
   onClose,
   onClearFromHere,
+  onFillFromHere,
+  cellValue,
 }: {
   menu: ContextMenuState;
   onClose: () => void;
   onClearFromHere: () => void;
+  onFillFromHere: () => void;
+  cellValue: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -47,9 +51,16 @@ function CellContextMenu({
   return (
     <div
       ref={ref}
-      className="fixed z-50 rounded-md border border-border bg-popover shadow-lg py-1 min-w-[180px]"
+      className="fixed z-50 rounded-md border border-border bg-popover shadow-lg py-1 min-w-[200px]"
       style={{ left: menu.x, top: menu.y }}
     >
+      <button
+        onClick={() => { onFillFromHere(); onClose(); }}
+        disabled={cellValue === 0}
+        className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-default"
+      >
+        Fill {cellValue.toLocaleString("ja-JP")} from {menu.year} →
+      </button>
       <button
         onClick={() => { onClearFromHere(); onClose(); }}
         className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2"
@@ -260,6 +271,7 @@ type Props = {
   onUpdateFamily: (id: string, patch: Partial<{ name: string; birthYear: number }>) => void;
   onSetGrowthRate: (type: CategoryType, id: string, rate: number) => void;
   onClearFromYear: (type: CategoryType, id: string, fromYear: number) => void;
+  onFillFromYear: (type: CategoryType, id: string, fromYear: number, value: number) => void;
   onMoveCategory: (type: CategoryType, id: string, direction: "up" | "down") => void;
 };
 
@@ -275,6 +287,7 @@ export function YearGrid({
   onUpdateFamily,
   onSetGrowthRate,
   onClearFromYear,
+  onFillFromYear,
   onMoveCategory,
 }: Props) {
   const years = Array.from(
@@ -386,8 +399,15 @@ export function YearGrid({
     <CellContextMenu
       menu={ctxMenu}
       onClose={closeMenu}
+      cellValue={ctxMenu ? (resolved.get(ctxMenu.catId)?.[ctxMenu.year] ?? 0) : 0}
       onClearFromHere={() => {
         if (ctxMenu) onClearFromYear(ctxMenu.type, ctxMenu.catId, ctxMenu.year);
+      }}
+      onFillFromHere={() => {
+        if (ctxMenu) {
+          const val = resolved.get(ctxMenu.catId)?.[ctxMenu.year] ?? 0;
+          if (val !== 0) onFillFromYear(ctxMenu.type, ctxMenu.catId, ctxMenu.year, val);
+        }
       }}
     />
     <div className="overflow-auto max-h-[calc(100dvh-7rem)] rounded-lg border border-border bg-card">

@@ -152,6 +152,29 @@ export function useSimulation() {
     [sim, update],
   );
 
+  // Fill a value from a given year to the end
+  const fillAmountsFromYear = useCallback(
+    (type: "income" | "costs" | "balanceInputs", id: string, fromYear: number, value: number) => {
+      if (!sim) return;
+      update({
+        ...sim,
+        [type]: sim[type].map((c) => {
+          if (c.id !== id) return c;
+          const newAmounts = { ...c.amounts };
+          for (let y = fromYear; y <= sim.endYear; y++) {
+            if (value === 0) {
+              delete newAmounts[y];
+            } else {
+              newAmounts[y] = value;
+            }
+          }
+          return { ...c, amounts: newAmounts };
+        }),
+      });
+    },
+    [sim, update],
+  );
+
   // Move a category up or down within its section
   const moveCategory = useCallback(
     (type: "income" | "costs" | "balanceInputs", id: string, direction: "up" | "down") => {
@@ -208,6 +231,7 @@ export function useSimulation() {
     setCategoryAmount,
     setCategoryGrowthRate,
     clearAmountsFromYear,
+    fillAmountsFromYear,
     moveCategory,
     loadScenario,
     reinitialize,
