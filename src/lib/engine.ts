@@ -1,12 +1,15 @@
 // -----------------------------------------------------------------------
 // Simulation engine — pure functions, no side effects
 //
-// Balance Input = absolute level of savings/investments (carries forward).
+// Balance Input = absolute level of savings/investments (carries forward);
+//   used only to SEED the starting balance.
 // Income / Costs = annual flow (no carry-forward, 0 if missing).
 // Both support per-category growthRate (% per year).
 //
 // Annual Net = income − costs
-// Balance   = balance input + annual net (per-year, not cumulative)
+// Balance    = running total:
+//   start year → TotalBalanceInput + Annual Net
+//   thereafter → previous Balance + Annual Net
 // -----------------------------------------------------------------------
 
 import type { Simulation, SimulationResult, YearResult, Category } from "./types";
@@ -84,6 +87,7 @@ export function simulate(sim: Simulation): SimulationResult {
   );
 
   const years: YearResult[] = [];
+  let runningBalance = 0;
   let peak = -Infinity;
   let min = Infinity;
 
@@ -93,7 +97,10 @@ export function simulate(sim: Simulation): SimulationResult {
     const balanceInput = sumResolved(biResolved, year);
 
     const annualNet = totalIncome - totalCosts;
-    const cumulativeBalance = balanceInput + annualNet;
+    // Running total: seed from the starting balance input, then accumulate net.
+    runningBalance =
+      year === sim.startYear ? balanceInput + annualNet : runningBalance + annualNet;
+    const cumulativeBalance = runningBalance;
 
     if (cumulativeBalance > peak) peak = cumulativeBalance;
     if (cumulativeBalance < min) min = cumulativeBalance;
