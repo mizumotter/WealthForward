@@ -432,9 +432,7 @@ export function YearGrid({
               </th>
             ))}
           </tr>
-        </thead>
-        <tbody>
-          {/* Family ages */}
+          {/* Family ages — pinned with the year header so ages stay visible */}
           {sim.family.length > 0 && (
             <>
               <tr>
@@ -445,9 +443,15 @@ export function YearGrid({
                   <SectionHeader label="Family" color="bg-chart-2" />
                 </td>
               </tr>
-              {sim.family.map((member) => (
-                <tr key={member.id} className="group">
-                  <td className="sticky left-0 z-10 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-1">
+              {sim.family.map((member, mIdx) => (
+                <tr
+                  key={member.id}
+                  className={cn(
+                    "group",
+                    mIdx === sim.family.length - 1 && "border-b border-border",
+                  )}
+                >
+                  <td className="sticky left-0 z-40 bg-card border-r border-border min-w-[120px] max-w-[280px] whitespace-nowrap px-2 py-1">
                     <div className="flex items-center gap-1">
                       <input
                         type="text"
@@ -480,22 +484,27 @@ export function YearGrid({
                   {years.map((year) => (
                     <td
                       key={year}
-                      className="border-r border-border/30 px-1 py-0.5 text-center text-xs text-muted-foreground tabular-nums"
+                      className="border-r border-border/30 bg-card px-1 py-0.5 text-center text-xs text-muted-foreground tabular-nums"
                     >
                       {year - member.birthYear}
                     </td>
                   ))}
                 </tr>
               ))}
-              <tr>
-                <td className="sticky left-0 z-10 bg-card px-2 py-1">
-                  <AddRowButton
-                    label="Add member"
-                    onClick={() => onAddFamily("New", 1990)}
-                  />
-                </td>
-              </tr>
             </>
+          )}
+        </thead>
+        <tbody>
+          {/* Add family member — scrolls normally (not pinned) */}
+          {sim.family.length > 0 && (
+            <tr>
+              <td className="sticky left-0 z-10 bg-card px-2 py-1">
+                <AddRowButton
+                  label="Add member"
+                  onClick={() => onAddFamily("New", 1990)}
+                />
+              </td>
+            </tr>
           )}
 
           {/* Balance Inputs */}
